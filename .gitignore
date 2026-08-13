@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+ENV/
+env/
+.env
+
+# React / Node
+node_modules/
+build/
+dist/
+.pnp
+.pnp.js
+
+# Firebase
+/firebase-debug.log
+/firebase-debug.*.log
+.firebaserc
+/.firebase/
+/emulator-ui/
+
+# Environment and Secrets
+.env.*
+.secret
+service-account-key.json
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
