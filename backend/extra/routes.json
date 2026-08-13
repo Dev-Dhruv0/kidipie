@@ -1,0 +1,76 @@
+These are the routes to be implemented
+
+{
+  "project": "Kids Creative Platform API",
+  "version": "v1",
+  "base_url": "/api/v1",
+  "notes": "Routes marked 'moderation_required: true' must pass content through the moderation service before being written to the public feed. Routes marked 'parent_only: true' are accessible only to verified parent accounts.",
+  "routes": {
+    "auth": [
+      { "method": "POST", "path": "/auth/signup", "description": "Register a new user (child account, requires parent consent flow trigger)", "auth_required": false },
+      { "method": "POST", "path": "/auth/parent/consent", "description": "Parent verifies/approves a child account", "auth_required": false },
+      { "method": "POST", "path": "/auth/login", "description": "Login and receive session/token", "auth_required": false },
+      { "method": "POST", "path": "/auth/logout", "description": "Invalidate current session", "auth_required": true },
+      { "method": "GET", "path": "/auth/me", "description": "Get current logged-in user's basic profile", "auth_required": true },
+      { "method": "POST", "path": "/auth/refresh", "description": "Refresh auth token", "auth_required": true }
+    ],
+    "users": [
+      { "method": "GET", "path": "/users/{user_id}", "description": "Get public profile of a user", "auth_required": true },
+      { "method": "PATCH", "path": "/users/{user_id}", "description": "Update own profile (display name, avatar, interests)", "auth_required": true },
+      { "method": "GET", "path": "/users/{user_id}/posts", "description": "Get all posts by a user", "auth_required": true },
+      { "method": "GET", "path": "/users/{user_id}/badges", "description": "Get badges earned by a user", "auth_required": true },
+      { "method": "GET", "path": "/users/{user_id}/streak", "description": "Get current streak status for a user", "auth_required": true },
+      { "method": "DELETE", "path": "/users/{user_id}", "description": "Deactivate/delete account (parent-initiated)", "auth_required": true, "parent_only": true }
+    ],
+    "posts": [
+      { "method": "POST", "path": "/posts", "description": "Upload a new creative post (drawing, writing, etc.)", "auth_required": true, "moderation_required": true },
+      { "method": "GET", "path": "/posts", "description": "Get paginated feed of posts (global or filtered by community)", "auth_required": true },
+      { "method": "GET", "path": "/posts/{post_id}", "description": "Get a single post's details", "auth_required": true },
+      { "method": "DELETE", "path": "/posts/{post_id}", "description": "Delete own post", "auth_required": true },
+      { "method": "GET", "path": "/posts/{post_id}/status", "description": "Check moderation status of a post (pending/approved/rejected)", "auth_required": true }
+    ],
+    "engagement": [
+      { "method": "POST", "path": "/posts/{post_id}/reactions", "description": "Add a reaction (like/love/etc.) to a post", "auth_required": true },
+      { "method": "DELETE", "path": "/posts/{post_id}/reactions", "description": "Remove own reaction from a post", "auth_required": true },
+      { "method": "GET", "path": "/posts/{post_id}/reactions", "description": "Get reaction counts/summary for a post", "auth_required": true },
+      { "method": "POST", "path": "/posts/{post_id}/replies", "description": "Add a templated/preset reply to a post", "auth_required": true, "moderation_required": true },
+      { "method": "GET", "path": "/posts/{post_id}/replies", "description": "Get all replies for a post", "auth_required": true },
+      { "method": "DELETE", "path": "/replies/{reply_id}", "description": "Delete own reply", "auth_required": true }
+    ],
+    "streaks_and_rewards": [
+      { "method": "GET", "path": "/tasks/daily", "description": "Get today's assigned daily task(s)", "auth_required": true },
+      { "method": "POST", "path": "/tasks/daily/{task_id}/complete", "description": "Mark a daily task as completed, updates streak", "auth_required": true },
+      { "method": "GET", "path": "/streaks/me", "description": "Get own current streak count and history", "auth_required": true },
+      { "method": "GET", "path": "/badges", "description": "Get list of all available badges", "auth_required": true },
+      { "method": "GET", "path": "/badges/me", "description": "Get badges earned by current user", "auth_required": true },
+      { "method": "GET", "path": "/rewards/currency/me", "description": "Get current in-app currency balance", "auth_required": true },
+      { "method": "GET", "path": "/rewards/store", "description": "Get list of items redeemable with currency", "auth_required": true },
+      { "method": "POST", "path": "/rewards/store/{item_id}/redeem", "description": "Redeem an item using currency", "auth_required": true }
+    ],
+    "communities": [
+      { "method": "GET", "path": "/communities", "description": "Get list of all communities (searchable/filterable by interest)", "auth_required": true },
+      { "method": "POST", "path": "/communities", "description": "Create a new community (may be restricted to admins initially)", "auth_required": true },
+      { "method": "GET", "path": "/communities/{community_id}", "description": "Get details of a specific community", "auth_required": true },
+      { "method": "POST", "path": "/communities/{community_id}/join", "description": "Join a community", "auth_required": true },
+      { "method": "POST", "path": "/communities/{community_id}/leave", "description": "Leave a community", "auth_required": true },
+      { "method": "GET", "path": "/communities/{community_id}/posts", "description": "Get posts shared within a community", "auth_required": true },
+      { "method": "GET", "path": "/communities/{community_id}/members", "description": "Get list of community members", "auth_required": true }
+    ],
+    "chatbot": [
+      { "method": "POST", "path": "/chatbot/message", "description": "Send a message to the help chatbot and get a response", "auth_required": true },
+      { "method": "GET", "path": "/chatbot/faq", "description": "Get common preset help topics/questions", "auth_required": false }
+    ],
+    "moderation": [
+      { "method": "GET", "path": "/moderation/queue", "description": "Get content pending moderation review", "auth_required": true, "admin_only": true },
+      { "method": "POST", "path": "/moderation/{content_id}/approve", "description": "Approve flagged/pending content", "auth_required": true, "admin_only": true },
+      { "method": "POST", "path": "/moderation/{content_id}/reject", "description": "Reject flagged/pending content", "auth_required": true, "admin_only": true },
+      { "method": "POST", "path": "/moderation/report", "description": "Report a post/reply/user for review", "auth_required": true }
+    ],
+    "parent_dashboard": [
+      { "method": "GET", "path": "/parent/children", "description": "Get list of linked child accounts", "auth_required": true, "parent_only": true },
+      { "method": "GET", "path": "/parent/children/{child_id}/activity", "description": "Get activity summary for a child account", "auth_required": true, "parent_only": true },
+      { "method": "PATCH", "path": "/parent/children/{child_id}/settings", "description": "Update settings for a child account (time limits, privacy)", "auth_required": true, "parent_only": true },
+      { "method": "POST", "path": "/parent/children/{child_id}/communities/approve", "description": "Approve a community join request for a child", "auth_required": true, "parent_only": true }
+    ]
+  }
+}
