@@ -1,13 +1,29 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from routers import (
+    auth,
+    chatbot,
+    communities,
+    engagement,
+    moderation,
+    parent,
+    posts,
+    streaks_rewards,
+    users,
+)
 
+app = FastAPI(title="Kids Creative Platform API", version="v1")
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
-@app.get("/posts")
-async def root():
-    return {"message": "Posts World"}
+# Include all routers under /api/v1
+for router_module in [
+    auth,
+    users,
+    posts,
+    engagement,
+    streaks_rewards,
+    communities,
+    chatbot,
+    moderation,
+    parent,
+]:
+    app.include_router(router_module.router, prefix="/api/v1")
