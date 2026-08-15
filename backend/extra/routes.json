@@ -1,6 +1,6 @@
-These are the routes to be implemented
-
 {
+  "_description": "These are the routes to be implemented",
+  
   "project": "Kids Creative Platform API",
   "version": "v1",
   "base_url": "/api/v1",
