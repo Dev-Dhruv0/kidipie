@@ -19,10 +19,10 @@ The core design principle: **interaction happens through activities, not open-en
 |---|---|---|
 | Backend | FastAPI (Python) | Business logic, moderation pipeline, API layer |
 | Frontend | React + Tailwind CSS | Component-based UI, mobile-friendly |
-| Database | Firebase (Firestore) — SQLite for early local dev | Firebase for auth, real-time data, storage; SQLite while we prototype backend logic offline |
+| Database | Supabase (PostgreSQL) | Supabase for auth, PostgreSQL database, real-time data, and storage |
 | Version Control | Git | See branching convention below |
 
-**Why this stack:** FastAPI gives us a typed, testable backend for logic Firebase can't handle alone (currency/streak calculations, content moderation checks). Firebase handles auth, real-time listeners, and storage without us building that infra ourselves. React + Tailwind lets us move fast on UI while keeping full design control.
+**Why this stack:** FastAPI gives us a typed, testable backend for logic Supabase can't handle alone (currency/streak calculations, content moderation checks). Supabase handles auth, real-time listeners, and storage without us building that infra ourselves. React + Tailwind lets us move fast on UI while keeping full design control.
 
 ## Initial Features (v1 Scope)
 
@@ -42,7 +42,7 @@ The core design principle: **interaction happens through activities, not open-en
 
 Because our users are minors, some things aren't optional:
 - **No open free-text chat** between kids in v1 — use reactions/templated replies only.
-- **All uploaded content (posts, images) must pass through a moderation check** before being visible to other users — never write directly from client to Firestore/Storage for public content.
+- **All uploaded content (posts, images) must pass through a moderation check** before being visible to other users — never write directly from client to database/storage for public content.
 - **No behavioral ad tracking, no targeted ads.** Ever.
 - **Parental visibility** is a feature, not an afterthought — even a v1 parent view (activity summary) builds trust.
 - Keep an eye on **COPPA** (US) and **UK/EU Age Appropriate Design Code** requirements as we build auth/data flows — these affect how we design consent and data storage from day one, not something to patch in later.
@@ -57,7 +57,7 @@ Because our users are minors, some things aren't optional:
 /frontend        → React + Tailwind app
   /src/components   → Reusable UI components
   /src/pages        → Route-level pages
-  /src/hooks        → Custom hooks (Firebase listeners, auth state)
+  /src/hooks        → Custom hooks (Supabase listeners, auth state)
 /docs            → Design notes, feature specs, meeting notes
 ```
 
@@ -71,7 +71,7 @@ Because our users are minors, some things aren't optional:
 
 ## Getting Started
 
-*(Fill in once backend/frontend setup is finalized — venv setup, `.env` structure, Firebase config steps, etc.)*
+*(Fill in once backend/frontend setup is finalized — venv setup, `.env` structure, Supabase config steps, etc.)*
 
 ## Team Notes
 
