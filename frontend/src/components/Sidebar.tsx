@@ -18,7 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const navItems = [
         { id: 'home' as TabType, label: 'Home', icon: Home },
         { id: 'explore' as TabType, label: 'Explore', icon: Compass },
-        { id: 'communities' as TabType, label: 'Communities', icon: Users },
+        { id: 'clan' as TabType, label: 'Clan', icon: Users },
         { id: 'streaks' as TabType, label: 'Streaks', icon: Flame },
         { id: 'create' as TabType, label: 'Create', icon: PlusCircle },
     ];
