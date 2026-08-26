@@ -1,5 +1,36 @@
 export type TabType = 'home' | 'explore' | 'communities' | 'streaks' | 'profile';
 
+export interface GalleryItem {
+  id: string;
+  title: string;
+  imageUrl: string;
+  likes: number;
+  createdAt: string;
+  category: string;
+}
+
+export interface UserProfile {
+  id?: string;
+  name: string;
+  title: string;
+  bio: string;
+  avatar: string;
+  streakDays: number;
+  level: number;
+  xp: number;
+  xpNextLevel: number;
+  streakCalendar: boolean[];
+  gallery: GalleryItem[];
+}
+
+export interface CommentItem {
+  id: string;
+  authorName: string;
+  authorAvatar: string;
+  text: string;
+  timeAgo: string;
+}
+
 export interface PostItem {
   id: string;
   author: UserProfile;
@@ -15,7 +46,7 @@ export interface PostItem {
     surprised: number;
     sparkles: number;
   };
-  comments: string[];
+  comments: CommentItem[];
   userLiked?: boolean;
 }
 
@@ -29,52 +60,6 @@ export interface PostBoxProps {
   }) => void | Promise<void>;
   placeholder?: string;
   className?: string;
-}
-
-
-export interface Creator {
-  id: string;
-  name: string;
-  username: string;
-  avatar: string;
-  streakDays: number;
-  badge?: string;
-  isCurrentUser?: boolean;
-}
-
-export interface Comment {
-  id: string;
-  author: string;
-  authorAvatar: string;
-  text: string;
-  timeAgo: string;
-}
-
-export interface Post {
-  id: string;
-  creator: Creator;
-  title?: string;
-  caption: string;
-  imageUrl: string;
-  imageAlt?: string;
-  aspectRatio?: 'square' | '4/3' | '16/9' | 'auto';
-  isProject?: boolean;
-  category: 'art' | 'science' | 'tech' | 'making' | 'general';
-  topBorderColor?: string;
-  timeAgo: string;
-  likes: number;
-  reactions: {
-    heart: number;
-    surprised: number;
-    sparkle: number;
-  };
-  userReactions: {
-    heart: boolean;
-    surprised: boolean;
-    sparkle: boolean;
-  };
-  comments: Comment[];
-  quickChips: string[];
 }
 
 export interface Community {
@@ -106,24 +91,9 @@ export interface Badge {
   description: string;
 }
 
-export interface GalleryItem {
+export interface NotificationItem {
   id: string;
   title: string;
-  imageUrl: string;
-  likes: number;
-  createdAt: string;
-  category: string;
-}
-
-export interface UserProfile {
-  name: string;
-  title: string;
-  bio: string;
-  avatar: string;
-  streakDays: number;
-  level: number;
-  xp: number;
-  xpNextLevel: number;
-  streakCalendar: boolean[]; // 10 days
-  gallery: GalleryItem[];
+  time: string;
+  read: boolean;
 }

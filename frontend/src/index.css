@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg-app: #fbf9f1;
+  --color-bg-card: #ffffff;
+  --color-bg-subtle: #f0eee6;
+  --color-bg-input: #f5f4ec;
+  --color-text-main: #1b1c17;
+  --color-text-muted: #797587;
+  --color-text-secondary: #484555;
+  --color-primary: #5d39df;
+  --color-primary-light: #7757f9;
+  --color-primary-hover: #4c2dc7;
+  --color-accent-yellow: #fcd03d;
+  --color-accent-yellow-text: #705900;
+  --color-border-subtle: #e4e3db;
+  --color-border-medium: #c9c4d8;
+  --color-danger: #ba1a1a;
+}
+
+:root {
+  --bg-app: #fbf9f1;
+  --bg-card: #ffffff;
+  --bg-subtle: #f0eee6;
+  --bg-input: #f5f4ec;
+  --text-main: #1b1c17;
+  --text-muted: #797587;
+  --text-secondary: #484555;
+  --primary: #5d39df;
+  --primary-light: #7757f9;
+  --primary-hover: #4c2dc7;
+  --accent-yellow: #fcd03d;
+  --accent-yellow-text: #705900;
+  --border-subtle: #e4e3db;
+  --border-medium: #c9c4d8;
+  --danger: #ba1a1a;
+}
+
+@layer components {
+  .chunky-btn-primary {
+    box-shadow: 0px 4px 0px 0px #4c2dc7;
+    transition: all 0.15s ease-in-out;
+  }
+  .chunky-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 6px 0px 0px #4c2dc7;
+  }
+  .chunky-btn-primary:active {
+    transform: translateY(2px);
+    box-shadow: 0px 2px 0px 0px #4c2dc7;
+  }
+}
