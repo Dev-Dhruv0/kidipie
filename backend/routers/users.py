@@ -1,8 +1,60 @@
 from typing import Annotated
-
-from fastapi import APIRouter, Path
+from pydantic import BaseModel
+from fastapi import APIRouter, Path, HTTPException
+from database import supabase, supabse_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+class SignupRequest(BaseModel):
+    username: str
+    full_name: str
+    age: int
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+@router.post("/login")
+def login(payload: LoginRequest):
+    try:
+        result = supabase.auth.sign_in_with_password({
+            "email": payload.email,
+            "password": payload.password
+        })
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+    return {
+        "access_token": result.session.access_token,
+        "refresh_token": result.session.refresh_token,
+        "user_id": result.user.id,  # this is the auth.users.id / your users.auth_id
+    }
+
+
+@router.post("/signup")
+def signup(payload: SignupRequest):
+    result = supabase.auth.sign_up({
+        "email": payload.email,
+        "password": payload.password
+    })
+    if result.user is None:
+        raise HTTPException(status_code=400, detail="Signup failed")
+
+    # now create the matching row in public.users
+    supabse_admin.table("users").insert({
+        "user_id": result.user.id,
+        "email": payload.email,
+        "username": payload.username,
+        "full_name": payload.full_name,
+        "age": payload.age
+    }).execute()
+
+    return {"user_id": result.user.id}
 
 
 @router.get("/{user_id}")
