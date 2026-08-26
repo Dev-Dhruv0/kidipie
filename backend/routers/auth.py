@@ -1,21 +1,94 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from database import supabase, supabase_admin
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/signup")
-async def signup():
-    return {"message": "User registered", "user_id": 1, "consent_required": True}
+class SignupRequest(BaseModel):
+    username: str
+    full_name: str
+    age: int
+    email: str
+    password: str
 
 
-@router.post("/parent/consent")
-async def parent_consent():
-    return {"message": "Child account approved", "child_id": 1}
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 @router.post("/login")
-async def login():
-    return {"access_token": "fake-token-123", "token_type": "bearer"}
+def login(payload: LoginRequest):
+    try:
+        result = supabase.auth.sign_in_with_password({
+            "email": payload.email,
+            "password": payload.password
+        })
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+    return {
+        "access_token": result.session.access_token,
+        "refresh_token": result.session.refresh_token,
+        "user_id": result.user.id,  # this is the auth.users.id / your users.auth_id
+    }
+
+
+@router.post("/signup")
+def signup(payload: SignupRequest):
+    result = supabase.auth.sign_up({
+        "email": payload.email,
+        "password": payload.password
+    })
+    if result.user is None:
+        raise HTTPException(status_code=400, detail="Signup failed")
+
+    # now create the matching row in public.users
+    supabase_admin.table("users").insert({
+        "user_id": result.user.id,
+        "email": payload.email,
+        "username": payload.username,
+        "full_name": payload.full_name,
+        "age": payload.age
+    }).execute()
+
+    return {"user_id": result.user.id}
+
+
+@router.get("/login/google")
+def google_login():
+    result = supabase.auth.sign_in_with_oauth({
+        "provider": "google",
+        "options": {
+            "redirect_to": "http://localhost:8000/api/v1/auth/callback"
+        }
+    })
+    return {"auth_url": result.url}
+
+
+@router.get("/callback")
+def google_callback(code: str):
+    try:
+        result = supabase.auth.exchange_code_for_session({"auth_code": code})
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+    existing = supabase_admin.table("users").select("*").eq("user_id", result.user.id).execute()
+    if not existing.data:
+        supabase_admin.table("users").insert({
+            "user_id": result.user.id,
+            "email": result.user.email,
+            "username": result.user.email.split("@")[0],
+            "full_name": result.user.user_metadata.get("full_name", ""),
+            "age": None
+        }).execute()
+
+    return {
+        "access_token": result.session.access_token,
+        "refresh_token": result.session.refresh_token,
+        "user_id": result.user.id,
+    }
 
 
 @router.post("/logout")

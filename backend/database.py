@@ -10,4 +10,4 @@ SUPABASE_SECRET_KEY: str = os.getenv("SUPABASE_SECRET_KEY")
 
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-supabse_admin: Client = create_client(SUPABASE_URL, SUPABASE_SECRET_KEY)
+supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SECRET_KEY)
