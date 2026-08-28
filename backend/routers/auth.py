@@ -1,8 +1,15 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from database import supabase, supabase_admin
+from database import supabase, supabase_admin, SUPABASE_URL
+import jwt
+from jwt import PyJWKClient
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+JWKS_URL = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+jwk_client = PyJWKClient(JWKS_URL)
+
+bearer_scheme = HTTPBearer()
 
 
 class SignupRequest(BaseModel):
@@ -31,7 +38,7 @@ def login(payload: LoginRequest):
     return {
         "access_token": result.session.access_token,
         "refresh_token": result.session.refresh_token,
-        "user_id": result.user.id,  # this is the auth.users.id / your users.auth_id
+        "user_id": result.user.id
     }
 
 
@@ -99,19 +106,32 @@ def google_callback(code: str):
     }
 
 
+@router.get("/me")
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    """
+    This route takes access token and returns user_id extracted from
+    JWT_access_token, you can test this using following command
+
+    curl -X 'GET' \
+      'http://localhost:8000/api/v1/auth/me' \
+      -H 'accept: application/json' \
+      -H 'authorization: Bearer <your_token_here>'
+    """
+    token = credentials.credentials  # already stripped of "Bearer "
+    try:
+        signing_key = jwk_client.get_signing_key_from_jwt(token)
+        payload = jwt.decode(
+            token, signing_key.key,
+            algorithms=["ES256"], audience="authenticated"
+        )
+    except jwt.PyJWTError:
+        raise HTTPException(401, "Invalid or expired token")
+    return payload["sub"]
+
+
 @router.post("/logout")
 async def logout():
     return {"message": "Logged out"}
-
-
-@router.get("/me")
-async def get_me():
-    return {
-        "user_id": 1,
-        "username": "creative_kid",
-        "display_name": "Creative Kid",
-        "role": "child",
-    }
 
 
 @router.post("/refresh")

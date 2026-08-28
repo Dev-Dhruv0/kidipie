@@ -1,20 +1,31 @@
 from typing import Annotated
-
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Path, HTTPException
+from pydantic import BaseModel
+import uuid
+from database import supabase_admin, supabase
+import jwt
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-@router.post("")
-async def create_post():
-    return {
-        "post_id": 1,
-        "title": "My New Drawing",
-        "status": "pending_moderation",
-    }
+class Post(BaseModel):
+    image_url: str
+    content: str
 
 
-@router.get("")
+@router.post("/create")
+async def create_post(post: Post):
+    try:
+        data = supabase.table('posts').insert({
+            post
+        }).execute()
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+    return data.data
+
+
+@router.get("/list")
 async def list_posts():
     return [
         {"post_id": 1, "title": "My Drawing", "type": "drawing", "status": "approved"},
