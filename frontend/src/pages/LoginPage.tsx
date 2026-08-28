@@ -2,6 +2,13 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import GoogleIcon from "../components/GoogleIcon";
+import { loginUser } from "../api/axios";
+
+export type Tokens = {
+  access_token: string;
+  refresh_token: string;
+  user_id: string;
+}
 
 export interface LoginPageProps {
   onForgotPassword?: () => void;
@@ -9,21 +16,19 @@ export interface LoginPageProps {
   onGoogleSignIn?: () => void;
 }
 
-export function LoginPage({
-  onForgotPassword,
-  onSubmit,
-  onGoogleSignIn,
-}: LoginPageProps) {
+export function LoginPage() {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit({ identifier, password });
-    }
+    console.log(identifier, password)
+    await loginUser({
+      email: identifier.trim(),
+      password: password.trim()
+    })
     navigate("/");
   };
 
@@ -52,7 +57,6 @@ export function LoginPage({
           <button
             type="button"
             id="google-signin-btn"
-            onClick={onGoogleSignIn || (() => navigate("/"))}
             className="w-full py-3 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-app)] active:scale-[0.99] border border-[var(--border-medium)] rounded-full flex items-center justify-center gap-3 text-sm font-bold text-[var(--text-main)] transition-all duration-150 shadow-sm cursor-pointer"
           >
             <GoogleIcon className="w-5 h-5 shrink-0" />
@@ -77,7 +81,7 @@ export function LoginPage({
               </div>
               <input
                 id="login-identifier"
-                type="text"
+                type="email"
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
@@ -133,7 +137,6 @@ export function LoginPage({
               <button
                 type="button"
                 id="forgot-password-link"
-                onClick={onForgotPassword}
                 className="text-sm font-semibold text-[var(--primary)] hover:underline transition-colors cursor-pointer"
               >
                 Forgot password?

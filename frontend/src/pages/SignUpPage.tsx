@@ -2,27 +2,26 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import GoogleIcon from "../components/GoogleIcon";
+import { signUpUser } from "../api/axios";
 
 export interface SignUpFormData {
-  fullName: string;
+  full_name: string;
   username: string;
-  age: string;
+  age: number | "";
   email: string;
   password: string;
 }
+
 
 export interface SignUpPageProps {
   onSubmit?: (data: SignUpFormData) => void;
   onGoogleSignUp?: () => void;
 }
 
-export function SignUpPage({
-  onSubmit,
-  onGoogleSignUp,
-}: SignUpPageProps) {
+export function SignUpPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<SignUpFormData>({
-    fullName: "",
+    full_name: "",
     username: "",
     age: "",
     email: "",
@@ -35,11 +34,14 @@ export function SignUpPage({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit(formData);
-    }
+    const payload = {
+      ...formData,
+      age: Number(formData.age),   // convert string → number
+    };
+    console.log(payload);
+    await signUpUser(payload);
     navigate("/");
   };
 
@@ -68,7 +70,6 @@ export function SignUpPage({
           <button
             type="button"
             id="google-signup-btn"
-            onClick={onGoogleSignUp || (() => navigate("/"))}
             className="w-full py-3 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-app)] active:scale-[0.99] border border-[var(--border-medium)] rounded-full flex items-center justify-center gap-3 text-sm font-bold text-[var(--text-main)] transition-all duration-150 shadow-sm cursor-pointer"
           >
             <GoogleIcon className="w-5 h-5 shrink-0" />
@@ -89,11 +90,11 @@ export function SignUpPage({
             {/* Full Name */}
             <div>
               <input
-                id="signup-fullname"
+                id="signup-full_name"
                 type="text"
-                name="fullName"
+                name="full_name"
                 required
-                value={formData.fullName}
+                value={formData.full_name}
                 onChange={handleChange}
                 placeholder="Full Name"
                 className="w-full px-4 py-3 bg-transparent border border-[var(--border-medium)] rounded-xl text-sm font-medium text-[var(--text-main)] placeholder:[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary)]/15 transition duration-150"
