@@ -1,5 +1,4 @@
 from typing import Annotated
-
 from fastapi import APIRouter, Path
 
 router = APIRouter(prefix="/users", tags=["users"])
