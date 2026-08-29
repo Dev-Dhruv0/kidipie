@@ -1,28 +1,35 @@
 from typing import Annotated
-from fastapi import APIRouter, Path, HTTPException
+from fastapi import APIRouter, Path, HTTPException, Depends
 from pydantic import BaseModel
-import uuid
-from database import supabase_admin, supabase
-import jwt
+from database import supabase, supabase_admin
+from .auth import get_current_user_id
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-class Post(BaseModel):
-    image_url: str
+class PostCreate(BaseModel):
+    image_url: str | None = None
     content: str
 
 
-@router.post("/create")
-async def create_post(post: Post):
+@router.post("/")
+def create_post(payload: PostCreate, auth_id: str = Depends(get_current_user_id)):
+    # look up your internal users.user_id from auth_id, since your posts.user_id
+    # references public.users, not auth.users directly
+    user_row = supabase_admin.table("users").select("user_id").eq("user_id", auth_id).execute()
+
+    if not user_row.data:
+        raise HTTPException(404, "User profile not found")
     try:
-        data = supabase.table('posts').insert({
-            post
+        result = supabase_admin.table("posts").insert({
+            "user_id": auth_id,
+            "content": payload.content,
+            "image_url": payload.image_url
         }).execute()
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(400, f"Failed to create post: {str(e)}")
 
-    return data.data
+    return result.data[0]
 
 
 @router.get("/list")

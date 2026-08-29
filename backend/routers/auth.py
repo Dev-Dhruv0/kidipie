@@ -107,7 +107,7 @@ def google_callback(code: str):
 
 
 @router.get("/me")
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     """
     This route takes access token and returns user_id extracted from
     JWT_access_token, you can test this using following command
