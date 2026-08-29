@@ -108,16 +108,7 @@ def google_callback(code: str):
 
 @router.get("/me")
 async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
-    """
-    This route takes access token and returns user_id extracted from
-    JWT_access_token, you can test this using following command
-
-    curl -X 'GET' \
-      'http://localhost:8000/api/v1/auth/me' \
-      -H 'accept: application/json' \
-      -H 'authorization: Bearer <your_token_here>'
-    """
-# Extract the JWT from the Authorization header
+    # Extract the JWT from the Authorization header
     token = credentials.credentials
     try:
         # Get the signing key used by Supabase to sign the JWT
