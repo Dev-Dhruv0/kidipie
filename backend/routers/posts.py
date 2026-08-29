@@ -5,13 +5,13 @@ from fastapi import APIRouter, Path, Depends, HTTPException
 from database import supabase
 from schemas.posts import (PostResponse, PostRequest, DeletePostResponse, PostStatusResponse)
 
-from routers.auth import verify_token
+from routers.auth import get_current_user_id
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
 @router.post("/create", response_model=PostResponse)
-async def create_post(post: PostRequest, user_id: str = Depends(verify_token)):
+async def create_post(post: PostRequest, user_id: str = Depends(get_current_user_id)):
     try:
         response = supabase.table('posts').insert({
             "user_id": user_id,
@@ -20,9 +20,9 @@ async def create_post(post: PostRequest, user_id: str = Depends(verify_token)):
         }).execute()
     except Exception:
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail="Failed to create post"
-            )
+        )
 
     return response.data[0]
 
@@ -32,7 +32,7 @@ async def list_posts():
     # Fetch all posts from the database
     response = supabase.table("posts").select("*").execute()
 
-    return response.data    
+    return response.data
 
 
 @router.get("/{post_id}", response_model=PostResponse)
@@ -52,7 +52,7 @@ async def get_post(post_id: Annotated[int, Path(ge=1)]):
             status_code=404,
             detail="Post not found"
         )
-    
+
     return response.data[0]
 
 
@@ -73,7 +73,7 @@ async def delete_post(post_id: Annotated[int, Path(ge=1)]):
             status_code=404,
             detail="Post not found"
         )
-    
+
     return {
         "message": "Post Deleted",
         "post_id": post_id
@@ -84,6 +84,6 @@ async def delete_post(post_id: Annotated[int, Path(ge=1)]):
 async def get_post_status(post_id: Annotated[int, Path(ge=1)]):
     # Placeholder until post status is stored in the database
     return {
-        "post_id": post_id, 
+        "post_id": post_id,
         "status": "approved",
-        }
+    }
