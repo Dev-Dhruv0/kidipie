@@ -135,6 +135,7 @@ async def verify_token(
 
 @router.get("/me")
 async def get_current_user(user_id: str = Depends(verify_token)):
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     """
     This route takes access token and returns user_id extracted from
     JWT_access_token, you can test this using following command
