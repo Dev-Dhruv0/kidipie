@@ -105,9 +105,36 @@ def google_callback(code: str):
         "user_id": result.user.id,
     }
 
+async def verify_token(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+):
+    # Extract the JWT from the Authorization header
+    token = credentials.credentials
+
+    try:
+        # Get the signing key used by Supabase to sign the JWT
+        signing_key = jwk_client.get_signing_key_from_jwt(token)
+
+        # Verify the JWT and decode its payload 
+        payload = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["ES256"],
+            audience="authenticated"
+        )
+    
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+    
+    # Return the authenticated user's UUID from the JWT
+    return payload["sub"]
+
 
 @router.get("/me")
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def get_current_user(user_id: str = Depends(verify_token)):
     """
     This route takes access token and returns user_id extracted from
     JWT_access_token, you can test this using following command
@@ -117,16 +144,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
       -H 'accept: application/json' \
       -H 'authorization: Bearer <your_token_here>'
     """
-    token = credentials.credentials  # already stripped of "Bearer "
-    try:
-        signing_key = jwk_client.get_signing_key_from_jwt(token)
-        payload = jwt.decode(
-            token, signing_key.key,
-            algorithms=["ES256"], audience="authenticated"
-        )
-    except jwt.PyJWTError:
-        raise HTTPException(401, "Invalid or expired token")
-    return payload["sub"]
+    return user_id
 
 
 @router.post("/logout")
