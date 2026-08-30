@@ -31,3 +31,7 @@ class CommentRequest(BaseModel):
     post_id: int
     user_id: UUID
     comment_text: str
+
+
+class ReactionRequest(BaseModel):
+    reaction_type: str
