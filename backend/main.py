@@ -3,13 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routers import (
     auth,
-    chatbot,
-    communities,
-    engagement,
-    moderation,
-    parent,
     posts,
-    streaks_rewards,
+    comments,
+    reactions,
     users,
 )
 
@@ -34,11 +30,7 @@ for router_module in [
     auth,
     users,
     posts,
-    engagement,
-    streaks_rewards,
-    communities,
-    chatbot,
-    moderation,
-    parent,
+    comments,
+    reactions,
 ]:
     app.include_router(router_module.router, prefix="/api/v1")

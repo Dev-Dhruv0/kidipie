@@ -1,29 +1,29 @@
 from typing import Annotated
-
 from fastapi import APIRouter, Path, Depends, HTTPException
-
-from database import supabase
-from schemas.posts import (PostResponse, PostRequest, DeletePostResponse, PostStatusResponse)
-
-from routers.auth import verify_token
+from database import supabase, SUPABASE_URL, SUPABASE_KEY
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from schemas.posts import (PostResponse, PostRequest, DeletePostResponse,
+                           CommentRequest, ReactionRequest)
+from routers.auth import get_current_user_id
+from supabase import create_client
 
 router = APIRouter(prefix="/posts", tags=["posts"])
+bearer_scheme = HTTPBearer()
 
 
 @router.post("/create", response_model=PostResponse)
-async def create_post(post: PostRequest, user_id: str = Depends(verify_token)):
+async def create_post(post: PostRequest, auth_id: str = Depends(get_current_user_id),
+                      credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    db = create_client(SUPABASE_URL, SUPABASE_KEY)
+    db.postgrest.auth(credentials.credentials)
     try:
-        response = supabase.table('posts').insert({
-            "user_id": user_id,
+        response = db.table('posts').insert({
+            "user_id": auth_id,
             "content": post.content,
             "image_url": post.image_url,
         }).execute()
     except Exception:
-        raise HTTPException(
-            status_code=500, 
-            detail="Failed to create post"
-            )
-
+        raise HTTPException(status_code=500, detail="Failed to create post")
     return response.data[0]
 
 
@@ -31,8 +31,7 @@ async def create_post(post: PostRequest, user_id: str = Depends(verify_token)):
 async def list_posts():
     # Fetch all posts from the database
     response = supabase.table("posts").select("*").execute()
-
-    return response.data    
+    return response.data
 
 
 @router.get("/{post_id}", response_model=PostResponse)
@@ -52,38 +51,25 @@ async def get_post(post_id: Annotated[int, Path(ge=1)]):
             status_code=404,
             detail="Post not found"
         )
-    
+
     return response.data[0]
 
 
 @router.delete("/{post_id}", response_model=DeletePostResponse)
-async def delete_post(post_id: Annotated[int, Path(ge=1)]):
-    # Delete the post from the database using its post ID
-    response = (
-        supabase
-        .table("posts")
-        .delete()
-        .eq("post_id", post_id)
-        .execute()
-    )
+async def delete_post(
+    post_id: Annotated[int, Path(ge=1)],
+    auth_id: str = Depends(get_current_user_id),
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+):
+    db = create_client(SUPABASE_URL, SUPABASE_KEY)
+    db.postgrest.auth(credentials.credentials)
 
-    # Return an error if the requested post does not exist
-    if not response.data:
-        raise HTTPException(
-            status_code=404,
-            detail="Post not found"
-        )
-    
-    return {
-        "message": "Post Deleted",
-        "post_id": post_id
-    }
+    existing = db.table("posts").select("post_id, user_id").eq("post_id", post_id).execute()
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if existing.data[0]["user_id"] != auth_id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post")
 
+    db.table("posts").delete().eq("post_id", post_id).execute()
 
-@router.get("/{post_id}/status", response_model=PostStatusResponse)
-async def get_post_status(post_id: Annotated[int, Path(ge=1)]):
-    # Placeholder until post status is stored in the database
-    return {
-        "post_id": post_id, 
-        "status": "approved",
-        }
+    return {"message": "Post Deleted", "post_id": post_id}
