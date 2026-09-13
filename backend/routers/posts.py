@@ -1,25 +1,28 @@
-from typing import Annotated
-from fastapi import APIRouter, Path, Depends, HTTPException
-from database import supabase, SUPABASE_URL, SUPABASE_KEY
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from schemas.posts import (PostResponse, PostRequest, DeletePostResponse,
-                           CommentRequest, ReactionRequest)
-from routers.auth import get_current_user_id
 from supabase import create_client
-
+from routers.auth import get_current_user_id
+from schemas.posts import (PostResponse, PostRequest, DeletePostResponse)
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from database import supabase, SUPABASE_URL, SUPABASE_KEY
+from typing import Annotated
+from fastapi import (APIRouter, Path, Depends, HTTPException, UploadFile, File,
+                     Form)
 router = APIRouter(prefix="/posts", tags=["posts"])
 bearer_scheme = HTTPBearer()
 
+BUCKET_NAME = 'user_posts'
+
 
 @router.post("/create", response_model=PostResponse)
-async def create_post(post: PostRequest, auth_id: str = Depends(get_current_user_id),
+async def create_post(content: str = Form(),
+                      image: UploadFile | None = File(None),
+                      auth_id: str = Depends(get_current_user_id),
                       credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     db = create_client(SUPABASE_URL, SUPABASE_KEY)
     db.postgrest.auth(credentials.credentials)
     try:
         response = db.table('posts').insert({
             "user_id": auth_id,
-            "content": post.content,
+            "content": content,
             "image_url": post.image_url,
         }).execute()
     except Exception:
@@ -30,8 +33,25 @@ async def create_post(post: PostRequest, auth_id: str = Depends(get_current_user
 @router.get("/list", response_model=list[PostResponse])
 async def list_posts():
     # Fetch all posts from the database
-    response = supabase.table("posts").select("*").execute()
-    return response.data
+    response = (
+        supabase
+        .table("posts")
+        .select("*, users(user_id, username, image_url), reactions(*)")
+        .order("created_at", desc=True)
+        .execute()
+    )
+    posts = response.data
+    for post in posts:
+        reactions = {}
+
+        for reaction in post["reactions"]:
+            reaction_type = reaction["reaction_type"]
+            reactions[reaction_type] = reactions.get(reaction_type, 0) + 1
+
+        del post["reactions"]
+        post["reactions"] = reactions
+
+    return posts
 
 
 @router.get("/{post_id}", response_model=PostResponse)
@@ -40,7 +60,7 @@ async def get_post(post_id: Annotated[int, Path(ge=1)]):
     response = (
         supabase
         .table("posts")
-        .select("*")
+        .select("*, users(user_id, username, image_url), reactions(*)")
         .eq("post_id", post_id)
         .execute()
     )
@@ -52,7 +72,15 @@ async def get_post(post_id: Annotated[int, Path(ge=1)]):
             detail="Post not found"
         )
 
-    return response.data[0]
+    post = response.data[0]
+    reactions = {}
+    for reaction in post["reactions"]:
+        reaction_type = reaction["reaction_type"]
+        reactions[reaction_type] = reactions.get(reaction_type, 0) + 1
+
+    del post["reactions"]
+    post["reactions"] = reactions
+    return post
 
 
 @router.delete("/{post_id}", response_model=DeletePostResponse)
@@ -71,5 +99,4 @@ async def delete_post(
         raise HTTPException(status_code=403, detail="Not authorized to delete this post")
 
     db.table("posts").delete().eq("post_id", post_id).execute()
-
     return {"message": "Post Deleted", "post_id": post_id}
