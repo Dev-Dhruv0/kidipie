@@ -12,6 +12,7 @@ export const PostBox: React.FC<PostBoxProps> = ({
   placeholder = "Share what you made today...",
   className = "",
 }) => {
+
   const [content, setContent] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -76,7 +77,7 @@ export const PostBox: React.FC<PostBoxProps> = ({
     try {
       const created = await createPost({
         content: trimmedContent,
-        image: selectedFile || undefined,
+        image: selectedFile || null,
       });
       await onPost?.(created);
       resetForm();

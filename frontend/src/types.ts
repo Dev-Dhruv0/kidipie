@@ -25,11 +25,15 @@ export interface UserProfile {
 }
 
 export interface CommentItem {
-  id: string;
-  authorName: string;
-  authorAvatar: string;
-  text: string;
-  timeAgo: string;
+  comment_id: string;
+  post_id: number;
+  content: string;
+  created_at: string;
+  user_id: string;
+  users: {
+    username: string;
+    image_url: string;
+  },
 }
 
 export interface PostItem {
