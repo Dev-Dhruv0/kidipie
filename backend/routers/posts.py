@@ -14,6 +14,23 @@ bearer_scheme = HTTPBearer()
 
 BUCKET_NAME = 'users_posts'
 
+MAX_IMAGE_SIZE = 5 * 1024 * 1024 #MAX 5 MB
+
+def detect_image_type(file_bytes: bytes):
+    if file_bytes.startswith(b"\xff\xd8\xff"):
+        return "jpeg", "image/jpeg"
+
+    if file_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png", "image/png"
+
+    if (
+        file_bytes.startswith(b"RIFF")
+        and file_bytes[8:12] == b"WEBP"
+    ):
+        return "webp", "image/webp"
+
+    return None,
+
 
 @router.post("/create", response_model=PostResponse)
 async def create_post(
@@ -36,6 +53,44 @@ async def create_post(
     image_url = None
 
     try:
+        if image:
+            file_bytes = await image.read()
+
+            if not file_bytes:
+                raise HTTPException(
+                    status_code = 400,
+                    detail = "Image file cannot be empty"
+                )
+
+            if len(file_bytes) > MAX_IMAGE_SIZE:
+                raise HTTPException(
+                    status_code = 413,
+                    detail = "Image must be 5 MB or smaller"
+                )
+
+            extension, content_type = detect_image_type(file_bytes)
+
+            if extension is None:
+                raise HTTPException(
+                    status_code = 400,
+                    detail = "Only JPEG, PNG, and WebP images are allowed"
+                )
+
+            file_name = f"{uuid.uuid4()}.{extension}"
+
+            db.storage.from_(BUCKET_NAME).upload(
+                file_name,
+                file_bytes,
+                {
+                    "content-type": content_type,
+                    "upsert": "false",
+                }
+            )
+
+            image_url = db.storage.from_(BUCKET_NAME).get_public_url(
+                file_name
+            )
+
         # Upload image if provided
         if image:
             print("Filename:", image.filename)
@@ -97,6 +152,9 @@ async def create_post(
         post_data["reactions"] = reactions
 
         return post_data
+
+    except HTTPException:
+        raise
 
     except Exception as e:
         print("CREATE POST ERROR:", repr(e))

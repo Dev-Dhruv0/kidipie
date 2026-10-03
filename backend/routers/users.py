@@ -28,18 +28,32 @@ async def get_user(user_id: UUID):
         )
     return response.data[0]
 
+# Fetch all posts with user info and reaction counts
 @router.get("/{user_id}/posts", response_model=list[PostResponse])
 async def get_user_posts(user_id: UUID):
     # Fetch all posts created by the specified user
     response = (
         supabase
         .table("posts")
-        .select("*")
+        .select("*, users(user_id, username, image_url), reactions(*)")
         .eq("user_id", str(user_id))
+        .order("created_at", desc=True)
         .execute()
     )
 
-    return response.data
+    posts = response.data or []
+
+    for post in posts:
+        reaction_counts = {}
+
+        for reaction in post.pop("reactions", []) or []:
+            reaction_type = reaction["reaction_type"]
+            reaction_counts[reaction_type] = (
+                reaction_counts.get(reaction_type, 0) + 1
+            )
+        post["reactions"] = reaction_counts
+
+    return posts
 
 @router.get("/{user_id}/badges")
 async def get_user_badges(user_id: UUID):
