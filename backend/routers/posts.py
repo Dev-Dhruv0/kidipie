@@ -29,7 +29,7 @@ def detect_image_type(file_bytes: bytes):
     ):
         return "webp", "image/webp"
 
-    return None,
+    return None, None
 
 
 @router.post("/create", response_model=PostResponse)
@@ -78,33 +78,6 @@ async def create_post(
 
             file_name = f"{uuid.uuid4()}.{extension}"
 
-            db.storage.from_(BUCKET_NAME).upload(
-                file_name,
-                file_bytes,
-                {
-                    "content-type": content_type,
-                    "upsert": "false",
-                }
-            )
-
-            image_url = db.storage.from_(BUCKET_NAME).get_public_url(
-                file_name
-            )
-
-        # Upload image if provided
-        if image:
-            print("Filename:", image.filename)
-            print("Content type:", image.content_type)
-
-            # Generate a unique filename for the uploaded image
-            file_extension = image.filename.split(".")[-1]
-            file_name = f"{uuid.uuid4()}.{file_extension}"
-
-            file_bytes = await image.read()
-
-            content_type = image.content_type or "image/jpeg"  # Default to JPEG if content type is not provided
-
-            # Upload the image to Supabase storage
             db.storage.from_(BUCKET_NAME).upload(
                 file_name,
                 file_bytes,
